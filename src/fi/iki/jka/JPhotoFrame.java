@@ -54,6 +54,8 @@ import javax.swing.event.ListSelectionListener;
 
 import com.drew.metadata.Tag;
 import com.drew.metadata.exif.ExifDirectory;
+import fi.iki.jka.utils.JOptionsPaneHelper;
+import fi.iki.jka.utils.SlideshowViewer;
 
 /** Top-level frame containing a BrowsePanel which shows scaled versions
  * images from the given list of images.
@@ -97,10 +99,11 @@ public class JPhotoFrame extends JFrame
     protected JPhotoExifDialog exifDialog = null;
     protected JFrame helpFrame = null;
     protected File photoDirectory = null;
-    
+    private JOptionsPaneHelper jOptionsPaneHelper;
+
     protected static HashMap allFrames = new HashMap();
     
-    protected JPhotoFrame() throws Exception {
+    public JPhotoFrame() throws Exception {
         // Do nothing... needed for inheritance !
     }
 
@@ -112,9 +115,17 @@ public class JPhotoFrame extends JFrame
         init(frameName, new JPhotoCollection(files));
     }
 
+    public JPhotoFrame(String frameName, JPhotoCollection photos, JOptionsPaneHelper jOptionsPaneHelper) throws Exception {
+        this.jOptionsPaneHelper = jOptionsPaneHelper;
+        init(frameName, photos);
+    }
+
     /** Real init called from different constructors
      */
     protected void init(String frameName, JPhotoCollection photos) throws Exception {
+        if (jOptionsPaneHelper == null) {
+            jOptionsPaneHelper = new JOptionsPaneHelper();
+        }
         prefs = Preferences.userRoot().node("/fi/iki/jka/jphotoframe");        
         JPhotoPageInfo.setDefault(prefs.get(PAGEINFO, null));
         photoDirectory = new File(prefs.get(PHOTO_DIR, System.getProperty("user.dir")));
@@ -546,7 +557,7 @@ public class JPhotoFrame extends JFrame
         else if (cmd.equals(JPhotoMenu.A_WATERMARK)) {
             String def = photos.getWatermark();
             if (def.equals(""))
-                def = "© "+Calendar.getInstance().get(Calendar.YEAR)+" ";
+                def = "ï¿½ "+Calendar.getInstance().get(Calendar.YEAR)+" ";
             String res = JOptionPane.showInputDialog(this, "Watermark",
                                                      def);
             if (res!=null)
@@ -580,14 +591,8 @@ public class JPhotoFrame extends JFrame
             showExif();
         }
         else if (cmd.equals(JPhotoMenu.A_SLIDESHOW)) {
-            if (photos.getSize()>0) {
-                JPhotoShow show = new JPhotoShow(photos, 5000, list);
-                show.setVisible(true);
-            }
-            else
-                JOptionPane.showMessageDialog(this, "No photos to show!",
-                                              APP_NAME, JOptionPane.ERROR_MESSAGE);
-                
+            SlideshowViewer slideshowViewer = new SlideshowViewer(photos, list, new JOptionsPaneHelper());
+            showSlideshow(slideshowViewer);
         }
         else if (cmd.equals(JPhotoMenu.A_HELP)) {
             displayHelp();
@@ -596,7 +601,7 @@ public class JPhotoFrame extends JFrame
             JOptionPane.showMessageDialog(this, APP_NAME+" v1.4.5 - Organize and Publish Your Digital Photos.\n"+
                                           "Copyright 2005-2007 Jari Karjala [www.jpkware.com],\n"
                                           +"Tarja Hakala [www.hakalat.net]"
-                                          +" and Zbynek Mužík [zbynek.muzik@email.cz]\n"
+                                          +" and Zbynek Muï¿½ï¿½k [zbynek.muzik@email.cz]\n"
                                           +"This is free software, licenced under the GNU General Public License.",
                                           JPhotoMenu.A_ABOUT, JOptionPane.INFORMATION_MESSAGE);
         }
@@ -624,6 +629,11 @@ public class JPhotoFrame extends JFrame
             System.out.println("Not implemented: "+cmd);
         
         setTitle();
+    }
+
+    public void showSlideshow(SlideshowViewer slideshowViewer) {
+
+        slideshowViewer.showSlideshow(this, 5000);
     }
 
     public void insertPhotos(String files[]) {
